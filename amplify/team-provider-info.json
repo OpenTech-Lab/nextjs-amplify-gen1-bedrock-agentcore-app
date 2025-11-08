@@ -1,0 +1,24 @@
+{
+  "dev": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-knowledgeshareappgen-dev-63c06-authRole",
+      "UnauthRoleArn": "arn:aws:iam::832780067678:role/amplify-knowledgeshareappgen-dev-63c06-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::832780067678:role/amplify-knowledgeshareappgen-dev-63c06-authRole",
+      "Region": "ap-northeast-1",
+      "DeploymentBucketName": "amplify-knowledgeshareappgen-dev-63c06-deployment",
+      "UnauthRoleName": "amplify-knowledgeshareappgen-dev-63c06-unauthRole",
+      "StackName": "amplify-knowledgeshareappgen-dev-63c06",
+      "StackId": "arn:aws:cloudformation:ap-northeast-1:832780067678:stack/amplify-knowledgeshareappgen-dev-63c06/a212a6f0-b647-11f0-8ad3-0a3566467381",
+      "AmplifyAppId": "d3t1rkzeqa6si8",
+      "APIGatewayAuthURL": "https://s3.amazonaws.com/amplify-knowledgeshareappgen-dev-63c06-deployment/amplify-cfn-templates/api/APIGatewayAuthStack.json"
+    },
+    "categories": {
+      "auth": {
+        "knowledgeshareappgen77014aff": {}
+      },
+      "hosting": {
+        "S3AndCloudFront": {}
+      }
+    }
+  }
+}
