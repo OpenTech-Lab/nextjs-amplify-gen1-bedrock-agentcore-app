@@ -78,26 +78,46 @@ export function useSSEChat(options: SSEChatOptions = {}) {
         return;
       }
 
+      // Debug logging
+      console.log("=== Token Debug Info ===");
+      console.log("ID Token length:", idToken?.length);
+      console.log("Access Token length:", accessToken?.length);
+      console.log("ID Token preview:", idToken?.substring(0, 50) + "...");
+      console.log("Access Token preview:", accessToken?.substring(0, 50) + "...");
+
       try {
         // API Gateway endpointにリクエストを送信（認証はAPI Gatewayで処理）
+        // Note: API Gateway authorizer validates ID tokens
+        // AgentCore needs access token (has 'client_id' claim) so we send it in a custom header
         const response = await fetch(
           "https://ip5fpmmfh8.execute-api.ap-northeast-1.amazonaws.com/dev/chat",
           {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: idToken, // Send just the JWT token for Cognito authorizer
+              Authorization: `Bearer ${idToken}`, // ID token for API Gateway Cognito authorizer
+              "X-Access-Token": accessToken, // Access token for AgentCore (has client_id claim)
             },
             body: JSON.stringify({ prompt }),
           }
         );
 
+        console.log("Response status:", response.status);
+        console.log("Response headers:", Object.fromEntries(response.headers.entries()));
+
         if (!response.ok) {
-          const errorData = await response
-            .json()
-            .catch(() => ({ error: "Unknown error" }));
+          const errorText = await response.text();
+          console.log("Error response body:", errorText);
+
+          let errorData;
+          try {
+            errorData = JSON.parse(errorText);
+          } catch {
+            errorData = { error: errorText || "Unknown error" };
+          }
+
           throw new Error(
-            errorData.error || `HTTP ${response.status}: ${response.statusText}`
+            errorData.error || errorData.message || `HTTP ${response.status}: ${response.statusText || errorText}`
           );
         }
 

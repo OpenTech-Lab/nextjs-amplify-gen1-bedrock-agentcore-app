@@ -51,7 +51,7 @@
     },
     "chatApiDeployment": {
       "Type": "AWS::ApiGateway::Deployment",
-      "DependsOn": ["chatMethod"],
+      "DependsOn": ["chatMethod", "chatOptionsMethod"],
       "Properties": {
         "RestApiId": {
           "Ref": "chatApi"
@@ -95,6 +95,45 @@
             "StatusCode": "200",
             "ResponseModels": {
               "application/json": "Empty"
+            }
+          }
+        ]
+      }
+    },
+    "chatOptionsMethod": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "RestApiId": {
+          "Ref": "chatApi"
+        },
+        "ResourceId": {
+          "Ref": "chatResource"
+        },
+        "HttpMethod": "OPTIONS",
+        "AuthorizationType": "NONE",
+        "Integration": {
+          "Type": "MOCK",
+          "RequestTemplates": {
+            "application/json": "{\"statusCode\": 200}"
+          },
+          "IntegrationResponses": [
+            {
+              "StatusCode": "200",
+              "ResponseParameters": {
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Access-Token'",
+                "method.response.header.Access-Control-Allow-Methods": "'POST,OPTIONS'",
+                "method.response.header.Access-Control-Allow-Origin": "'*'"
+              }
+            }
+          ]
+        },
+        "MethodResponses": [
+          {
+            "StatusCode": "200",
+            "ResponseParameters": {
+              "method.response.header.Access-Control-Allow-Headers": true,
+              "method.response.header.Access-Control-Allow-Methods": true,
+              "method.response.header.Access-Control-Allow-Origin": true
             }
           }
         ]

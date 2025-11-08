@@ -22,10 +22,15 @@ exports.handler = async (event) => {
       };
     }
 
-    // Get the access token from the Authorization header (validated by API Gateway Cognito authorizer)
-    const authHeader =
-      event.headers?.Authorization || event.headers?.authorization;
-    if (!authHeader?.startsWith("Bearer ")) {
+    // Get the access token from the custom header (for AgentCore)
+    // Note: Authorization header contains ID token (already validated by API Gateway)
+    // X-Access-Token header contains access token (needed by AgentCore for client_id validation)
+    const accessToken =
+      event.headers?.["X-Access-Token"] ||
+      event.headers?.["x-access-token"];
+
+    if (!accessToken) {
+      console.error("Missing X-Access-Token header. Headers:", event.headers);
       return {
         statusCode: 401,
         headers: {
@@ -35,12 +40,12 @@ exports.handler = async (event) => {
           "Access-Control-Allow-Methods": "POST, OPTIONS",
         },
         body: JSON.stringify({
-          error: "Unauthorized: Missing or invalid Authorization header",
+          error: "Unauthorized: Missing X-Access-Token header",
         }),
       };
     }
 
-    const accessToken = authHeader.substring(7); // Remove 'Bearer ' prefix
+    console.log("Access token received, length:", accessToken.length);
 
     // Call AgentCore and get the complete response
     const response = await callAgentCore(accessToken, prompt.trim());
