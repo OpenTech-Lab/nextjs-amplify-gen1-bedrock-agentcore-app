@@ -26,8 +26,7 @@ exports.handler = async (event) => {
     // Note: Authorization header contains ID token (already validated by API Gateway)
     // X-Access-Token header contains access token (needed by AgentCore for client_id validation)
     const accessToken =
-      event.headers?.["X-Access-Token"] ||
-      event.headers?.["x-access-token"];
+      event.headers?.["X-Access-Token"] || event.headers?.["x-access-token"];
 
     if (!accessToken) {
       console.error("Missing X-Access-Token header. Headers:", event.headers);
