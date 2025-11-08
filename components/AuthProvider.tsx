@@ -9,5 +9,9 @@ export default function AuthProvider({
 }: {
   children: React.ReactNode;
 }) {
-  return <Authenticator>{children}</Authenticator>;
+  return (
+    <div className="min-h-screen flex flex-col justify-center items-center bg-background">
+      <Authenticator>{children}</Authenticator>
+    </div>
+  );
 }

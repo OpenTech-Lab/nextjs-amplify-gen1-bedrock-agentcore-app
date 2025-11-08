@@ -258,7 +258,7 @@ async function streamFromAgentCore(
 export async function POST(request: NextRequest) {
   try {
     // ユーザー認証の実行
-    const { idToken, accessToken } = await authenticate(request);
+    const { accessToken } = await authenticate(request);
 
     // リクエストボディからプロンプトを取得
     const { prompt } = await request.json();
