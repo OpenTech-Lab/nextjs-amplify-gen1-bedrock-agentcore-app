@@ -1,0 +1,149 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "API Gateway template for chatApi",
+  "Parameters": {
+    "env": {
+      "Type": "String"
+    },
+    "functionchatApiFunctionName": {
+      "Type": "String",
+      "Default": "chatApiFunction"
+    },
+    "functionchatApiFunctionArn": {
+      "Type": "String",
+      "Default": "arn:aws:lambda:ap-northeast-1:832780067678:function:chatApiFunction-dev"
+    }
+  },
+  "Conditions": {
+    "ShouldNotCreateEnvResources": {
+      "Fn::Equals": [
+        {
+          "Ref": "env"
+        },
+        "NONE"
+      ]
+    }
+  },
+  "Resources": {
+    "chatApi": {
+      "Type": "AWS::ApiGateway::RestApi",
+      "Properties": {
+        "Name": {
+          "Fn::If": [
+            "ShouldNotCreateEnvResources",
+            "chatApi",
+            {
+              "Fn::Join": [
+                "",
+                [
+                  "chatApi",
+                  "-",
+                  {
+                    "Ref": "env"
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "Description": "API for chat functionality"
+      }
+    },
+    "chatApiDeployment": {
+      "Type": "AWS::ApiGateway::Deployment",
+      "DependsOn": ["chatMethod"],
+      "Properties": {
+        "RestApiId": {
+          "Ref": "chatApi"
+        },
+        "StageName": "dev"
+      }
+    },
+    "chatResource": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "RestApiId": {
+          "Ref": "chatApi"
+        },
+        "ParentId": {
+          "Fn::GetAtt": ["chatApi", "RootResourceId"]
+        },
+        "PathPart": "chat"
+      }
+    },
+    "chatMethod": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "RestApiId": {
+          "Ref": "chatApi"
+        },
+        "ResourceId": {
+          "Ref": "chatResource"
+        },
+        "HttpMethod": "POST",
+        "AuthorizationType": "COGNITO_USER_POOLS",
+        "AuthorizerId": "6ohd0j",
+        "Integration": {
+          "Type": "AWS_PROXY",
+          "IntegrationHttpMethod": "POST",
+          "Uri": {
+            "Fn::Sub": "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${functionchatApiFunctionArn}/invocations"
+          }
+        },
+        "MethodResponses": [
+          {
+            "StatusCode": "200",
+            "ResponseModels": {
+              "application/json": "Empty"
+            }
+          }
+        ]
+      }
+    },
+    "chatApiFunctionPermission": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "functionchatApiFunctionArn"
+        },
+        "Action": "lambda:invokeFunction",
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Sub": "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${chatApi}/*/POST/chat"
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "RootUrl": {
+      "Value": {
+        "Fn::Sub": "https://${chatApi}.execute-api.${AWS::Region}.amazonaws.com/dev"
+      },
+      "Export": {
+        "Name": {
+          "Fn::Sub": "${AWS::StackName}-RootUrl"
+        }
+      }
+    },
+    "ApiName": {
+      "Value": {
+        "Ref": "chatApi"
+      },
+      "Export": {
+        "Name": {
+          "Fn::Sub": "${AWS::StackName}-ApiName"
+        }
+      }
+    },
+    "ApiId": {
+      "Value": {
+        "Ref": "chatApi"
+      },
+      "Export": {
+        "Name": {
+          "Fn::Sub": "${AWS::StackName}-ApiId"
+        }
+      }
+    }
+  }
+}

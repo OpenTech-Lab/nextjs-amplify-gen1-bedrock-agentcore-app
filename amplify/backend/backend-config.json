@@ -28,11 +28,35 @@
       "service": "Cognito"
     }
   },
-  "function": {},
+  "function": {
+    "chatApiFunction": {
+      "build": true,
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    }
+  },
   "hosting": {
     "S3AndCloudFront": {
       "providerPlugin": "awscloudformation",
       "service": "S3AndCloudFront"
+    }
+  },
+  "parameters": {
+    "AMPLIFY_function_chatApiFunction_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "chatApiFunction"
+        }
+      ]
+    },
+    "AMPLIFY_function_chatApiFunction_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "chatApiFunction"
+        }
+      ]
     }
   }
 }

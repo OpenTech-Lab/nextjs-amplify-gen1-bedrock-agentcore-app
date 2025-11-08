@@ -18,6 +18,15 @@
       },
       "hosting": {
         "S3AndCloudFront": {}
+      },
+      "function": {
+        "chatApiFunction": {
+          "deploymentBucketName": "amplify-knowledgeshareappgen-dev-63c06-deployment",
+          "s3Key": "amplify-builds/chatApiFunction-2f79585350694d347339-build.zip"
+        }
+      },
+      "api": {
+        "chatApi": {}
       }
     }
   }

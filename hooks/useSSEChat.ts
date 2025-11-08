@@ -9,99 +9,37 @@ interface SSEChatOptions {
   retryDelay?: number; // 再試行間隔（ミリ秒）
 }
 
-/**
- * SSE形式の行からデータ部分を抽出する
- * @param line SSEの1行
- * @returns 抽出されたデータ、または null
- */
-const extractDataFromLine = (line: string): string | null => {
-  if (line.startsWith("data: ")) {
-    return line.slice(6).trim();
-  }
-  return null;
-};
+// ストリーミング関連の関数は削除（API Gatewayでは使用しない）
+// const extractDataFromLine = (line: string): string | null => {
+//   if (line.startsWith("data: ")) {
+//     return line.slice(6).trim();
+//   }
+//   return null;
+// };
 
-/**
- * パースされたJSONからメッセージ内容を抽出する
- * @param parsed パースされたJSONオブジェクト
- * @returns 抽出されたテキスト内容、または null
- */
-const extractMessageContent = (
-  parsed: Record<string, unknown>
-): string | null => {
-  // エラーチェック
-  if (parsed.error && typeof parsed.error === "string") {
-    throw new Error(parsed.error);
-  }
+// const extractMessageContent = (
+//   parsed: Record<string, unknown>
+// ): string | null => {
+//   // エラーチェック
+//   if (parsed.error && typeof parsed.error === "string") {
+//     throw new Error(parsed.error);
+//   }
 
-  if (
-    parsed.event &&
-    typeof parsed.event === "object" &&
-    parsed.event !== null
-  ) {
-    const event = parsed.event as {
-      contentBlockDelta?: { delta?: { text?: string } };
-    };
-    if (event.contentBlockDelta?.delta?.text) {
-      return event.contentBlockDelta.delta.text;
-    }
-  }
+//   if (
+//     parsed.event &&
+//     typeof parsed.event === "object" &&
+//     parsed.event !== null
+//   ) {
+//     const event = parsed.event as {
+//       contentBlockDelta?: { delta?: { text?: string } };
+//     };
+//     if (event.contentBlockDelta?.delta?.text) {
+//       return event.contentBlockDelta.delta.text;
+//     }
+//   }
 
-  return null;
-};
-
-/**
- * SSEレスポンスを処理してメッセージを更新する
- * @param response Fetchレスポンス
- * @param onMessageUpdate メッセージ更新時のコールバック
- * @param onComplete 完了時のコールバック
- */
-const processStreamingResponse = async (
-  response: Response,
-  onMessageUpdate: (message: string) => void,
-  onComplete: (finalMessage: string) => void
-): Promise<void> => {
-  const reader = response.body!.getReader();
-  const decoder = new TextDecoder();
-  let currentMessage = "";
-  let buffer = "";
-
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      // バイナリデータをテキストに変換
-      buffer += decoder.decode(value, { stream: true });
-
-      // 改行で分割して各行を処理
-      const lines = buffer.split("\n");
-      buffer = lines.pop() || "";
-
-      for (const line of lines) {
-        if (!line.trim()) continue;
-
-        const dataToProcess = extractDataFromLine(line);
-        if (!dataToProcess) continue;
-
-        try {
-          const parsed = JSON.parse(dataToProcess);
-          const content = extractMessageContent(parsed);
-          if (content) {
-            currentMessage += content;
-            onMessageUpdate(currentMessage);
-          }
-        } catch {
-          // JSONパースエラーは無視して続行
-        }
-      }
-    }
-
-    onComplete(currentMessage);
-  } finally {
-    reader.releaseLock();
-  }
-};
+//   return null;
+// };
 
 /**
  * SSE（Server-Sent Events）を使用したチャット機能のカスタムフック
@@ -141,45 +79,36 @@ export function useSSEChat(options: SSEChatOptions = {}) {
       }
 
       try {
-        // SSE APIにリクエストを送信
-        const response = await fetch("/api/agent-stream", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "text/event-stream",
-            Authorization: `Bearer ${idToken}`,
-            "X-Access-Token": accessToken,
-          },
-          body: JSON.stringify({ prompt }),
-        });
+        // API Gateway endpointにリクエストを送信（認証はAPI Gatewayで処理）
+        const response = await fetch(
+          "https://ip5fpmmfh8.execute-api.ap-northeast-1.amazonaws.com/dev/chat",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: idToken, // Send just the JWT token for Cognito authorizer
+            },
+            body: JSON.stringify({ prompt }),
+          }
+        );
 
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          const errorData = await response
+            .json()
+            .catch(() => ({ error: "Unknown error" }));
+          throw new Error(
+            errorData.error || `HTTP ${response.status}: ${response.statusText}`
+          );
         }
 
-        if (!response.body) {
-          throw new Error("レスポンスボディがありません");
-        }
+        const data = await response.json();
 
         // 新しいメッセージスロットを追加
         setMessages((prev) => [...prev, ""]);
 
-        // ストリーミングレスポンスを処理
-        await processStreamingResponse(
-          response,
-          // メッセージ更新時
-          (currentMessage) => {
-            setMessages((prev) => [...prev.slice(0, -1), currentMessage]);
-          },
-          // 完了時
-          (finalMessage) => {
-            if (finalMessage) {
-              setMessages((prev) => [...prev.slice(0, -1), finalMessage]);
-            } else {
-              setMessages((prev) => prev.slice(0, -1));
-            }
-          }
-        );
+        // 完全なレスポンスを処理（ストリーミングではない）
+        const finalMessage = data.text || "";
+        setMessages((prev) => [...prev.slice(0, -1), finalMessage]);
       } catch (fetchError) {
         // 自動再試行（指数バックオフ）
         if (retryCount < maxRetries) {

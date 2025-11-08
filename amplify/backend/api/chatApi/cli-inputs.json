@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "paths": {
+    "/chat": {
+      "name": "/chat",
+      "lambdaFunction": "chatApiFunction",
+      "permissions": {
+        "setting": "private",
+        "auth": ["create", "read", "update", "delete"]
+      }
+    }
+  }
+}
