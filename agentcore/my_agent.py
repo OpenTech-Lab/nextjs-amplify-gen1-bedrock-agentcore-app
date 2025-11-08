@@ -4,7 +4,7 @@ from strands.models import BedrockModel
 from strands.tools.mcp import MCPClient
 from mcp import StdioServerParameters, stdio_client
 
-MODEL_ID = "jp.anthropic.claude-haiku-4-5-20251001-v1:0"
+MODEL_ID = "jp.anthropic.claude-sonnet-4-5-20250929-v1:0"
 
 # MCP client configuration
 stdio_mcp_client = MCPClient(
@@ -21,6 +21,12 @@ app = BedrockAgentCoreApp()
 agent = None
 mcp_context_manager = None
 
+# Define a naming-focused system prompt
+NAMING_SYSTEM_PROMPT = """
+あなたは知識を提供するためにユーザーを支援するアシスタントです。
+主な役割は、ユーザーが提供する情報に基づいて適切な情報を収集し回答することです。
+"""
+
 def initialize_agent():
     """Initialize agent with MCP tools (call once per container lifecycle)"""
     global agent, mcp_context_manager
@@ -35,7 +41,9 @@ def initialize_agent():
         # Create agent with tools
         agent = Agent(
             model=BedrockModel(model_id=MODEL_ID),
-            tools=tools
+            tools=tools,
+            system_prompt=NAMING_SYSTEM_PROMPT,
+            
         )
 
     return agent
@@ -49,7 +57,7 @@ async def invoke(payload):
     # Extract user prompt
     user_prompt = payload.get(
         "prompt",
-        "No prompt found in input, please guide customer to create a json payload with prompt key"
+        "入力にプロンプ​​トが見つかりません。プロンプト キーを使用して JSON ペイロードを作成するように顧客に指示してください。"
     )
 
     # Stream response from agent
