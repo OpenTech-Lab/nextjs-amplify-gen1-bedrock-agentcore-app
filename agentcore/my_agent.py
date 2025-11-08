@@ -4,7 +4,7 @@ from strands.models import BedrockModel
 from strands.tools.mcp import MCPClient
 from mcp import StdioServerParameters, stdio_client
 
-MODEL_ID = "anthropic.claude-3-5-sonnet-20240620-v1:0"
+MODEL_ID = "jp.anthropic.claude-haiku-4-5-20251001-v1:0"
 
 # MCP client configuration
 stdio_mcp_client = MCPClient(

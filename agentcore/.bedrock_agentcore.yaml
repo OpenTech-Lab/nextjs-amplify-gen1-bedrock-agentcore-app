@@ -23,7 +23,7 @@ agents:
     bedrock_agentcore:
       agent_id: my_agent-8ihNxq5pN4
       agent_arn: arn:aws:bedrock-agentcore:ap-northeast-1:832780067678:runtime/my_agent-8ihNxq5pN4
-      agent_session_id: 26a1f0be-d4e0-4930-9c43-56ce033e8678
+      agent_session_id: null
     codebuild:
       project_name: bedrock-agentcore-my_agent-builder
       execution_role: arn:aws:iam::832780067678:role/AmazonBedrockAgentCoreSDKCodeBuild-ap-northeast-1-e72c1a7c7a
@@ -34,12 +34,12 @@ agents:
       memory_arn: null
       memory_name: my_agent_memory
       event_expiry_days: 30
-      first_invoke_memory_check_done: true
+      first_invoke_memory_check_done: false
       was_created_by_toolkit: false
     authorizer_configuration:
       customJWTAuthorizer:
-        discoveryUrl: https://cognito-idp.ap-northeast-1.amazonaws.com/ap-northeast-1_dMnUK5rLo/.well-known/openid-configuration
+        discoveryUrl: https://cognito-idp.ap-northeast-1.amazonaws.com/ap-northeast-1_zLxODsiGM/.well-known/openid-configuration
         allowedClients:
-        - 2danloh9bnkjqdjmct4ls2nv1j
+        - qtv7dviodvnfu1c0ft93vkpmj
     request_header_configuration: null
     oauth_configuration: null
