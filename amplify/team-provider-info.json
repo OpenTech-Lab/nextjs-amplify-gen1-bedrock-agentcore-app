@@ -22,7 +22,7 @@
       "function": {
         "chatApiFunction": {
           "deploymentBucketName": "amplify-knowledgeshareappgen-dev-63c06-deployment",
-          "s3Key": "amplify-builds/chatApiFunction-5757696b6a6d4a537076-build.zip"
+          "s3Key": "amplify-builds/chatApiFunction-54495766375676585749-build.zip"
         }
       },
       "api": {

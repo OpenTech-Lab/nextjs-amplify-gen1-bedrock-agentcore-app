@@ -78,24 +78,14 @@ export function useSSEChat(options: SSEChatOptions = {}) {
         return;
       }
 
-      // Debug logging
-      console.log("=== Token Debug Info ===");
-      console.log("ID Token length:", idToken?.length);
-      console.log("Access Token length:", accessToken?.length);
-      console.log("ID Token preview:", idToken?.substring(0, 50) + "...");
-      console.log("Access Token preview:", accessToken?.substring(0, 50) + "...");
-
       try {
-        // API Gateway endpointにリクエストを送信（認証はAPI Gatewayで処理）
-        // Note: API Gateway authorizer validates ID tokens
-        // AgentCore needs access token (has 'client_id' claim) so we send it in a custom header
+        // Lambda Function URL with SSE streaming (no API Gateway timeout)
         const response = await fetch(
-          "https://ip5fpmmfh8.execute-api.ap-northeast-1.amazonaws.com/dev/chat",
+          "https://nufrr3f65q2ygigtxizwwotug40edhkn.lambda-url.ap-northeast-1.on.aws/",
           {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${idToken}`, // ID token for API Gateway Cognito authorizer
               "X-Access-Token": accessToken, // Access token for AgentCore (has client_id claim)
             },
             body: JSON.stringify({ prompt }),
@@ -103,7 +93,6 @@ export function useSSEChat(options: SSEChatOptions = {}) {
         );
 
         console.log("Response status:", response.status);
-        console.log("Response headers:", Object.fromEntries(response.headers.entries()));
 
         if (!response.ok) {
           const errorText = await response.text();
@@ -121,14 +110,66 @@ export function useSSEChat(options: SSEChatOptions = {}) {
           );
         }
 
-        const data = await response.json();
-
         // 新しいメッセージスロットを追加
         setMessages((prev) => [...prev, ""]);
 
-        // 完全なレスポンスを処理（ストリーミングではない）
-        const finalMessage = data.text || "";
-        setMessages((prev) => [...prev.slice(0, -1), finalMessage]);
+        // Handle SSE streaming response
+        const reader = response.body?.getReader();
+        if (!reader) {
+          throw new Error("Response body is not readable");
+        }
+
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+
+          // Process complete lines (SSE format)
+          let newlineIndex;
+          while ((newlineIndex = buffer.indexOf("\n")) !== -1) {
+            const line = buffer.slice(0, newlineIndex).trim();
+            buffer = buffer.slice(newlineIndex + 1);
+
+            if (!line) continue;
+
+            // Parse SSE data
+            if (line.startsWith("data: ")) {
+              const data = line.slice(6).trim();
+
+              if (data === "[DONE]") {
+                console.log("Stream completed");
+                break;
+              }
+
+              try {
+                const parsed = JSON.parse(data);
+
+                // Handle error messages
+                if (parsed.error) {
+                  throw new Error(parsed.error);
+                }
+
+                // Append text chunks to the current message
+                if (parsed.text) {
+                  setMessages((prev) => {
+                    const newMessages = [...prev];
+                    newMessages[newMessages.length - 1] += parsed.text;
+                    return newMessages;
+                  });
+                }
+              } catch (parseError) {
+                if (parseError instanceof Error && parseError.message.startsWith("An error occurred")) {
+                  throw parseError;
+                }
+                console.error("JSON parse error:", parseError, "for data:", data);
+              }
+            }
+          }
+        }
       } catch (fetchError) {
         // 自動再試行（指数バックオフ）
         if (retryCount < maxRetries) {

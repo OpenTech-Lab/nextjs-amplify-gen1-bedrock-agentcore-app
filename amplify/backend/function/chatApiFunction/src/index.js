@@ -1,88 +1,106 @@
+const { Readable } = require("stream");
+
 /**
- * @type {import('@types/aws-lambda').APIGatewayProxyHandler}
+ * Lambda streaming handler for AgentCore chat
+ * Streams responses in real-time using Lambda Function URL response streaming
  */
-exports.handler = async (event) => {
-  console.log(`EVENT: ${JSON.stringify(event)}`);
+exports.handler = awslambda.streamifyResponse(
+  async (event, responseStream, context) => {
+    console.log(`EVENT: ${JSON.stringify(event)}`);
 
-  try {
-    // Extract the prompt from the request body
-    const body = JSON.parse(event.body || "{}");
-    const { prompt } = body;
-
-    if (!prompt?.trim()) {
-      return {
-        statusCode: 400,
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Headers":
-            "Content-Type, Authorization, X-Access-Token",
-          "Access-Control-Allow-Methods": "POST, OPTIONS",
-        },
-        body: JSON.stringify({ error: "Bad Request: Empty prompt" }),
-      };
-    }
-
-    // Get the access token from the custom header (for AgentCore)
-    // Note: Authorization header contains ID token (already validated by API Gateway)
-    // X-Access-Token header contains access token (needed by AgentCore for client_id validation)
-    const accessToken =
-      event.headers?.["X-Access-Token"] || event.headers?.["x-access-token"];
-
-    if (!accessToken) {
-      console.error("Missing X-Access-Token header. Headers:", event.headers);
-      return {
-        statusCode: 401,
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Headers":
-            "Content-Type, Authorization, X-Access-Token",
-          "Access-Control-Allow-Methods": "POST, OPTIONS",
-        },
-        body: JSON.stringify({
-          error: "Unauthorized: Missing X-Access-Token header",
-        }),
-      };
-    }
-
-    console.log("Access token received, length:", accessToken.length);
-
-    // Call AgentCore and get the complete response
-    const response = await callAgentCore(accessToken, prompt.trim());
-
-    return {
+    // Set CORS headers for streaming response
+    const metadata = {
       statusCode: 200,
       headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive",
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Headers":
           "Content-Type, Authorization, X-Access-Token",
         "Access-Control-Allow-Methods": "POST, OPTIONS",
       },
-      body: JSON.stringify(response),
     };
-  } catch (error) {
-    console.error("Lambda error:", error);
-    return {
-      statusCode: 500,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers":
-          "Content-Type, Authorization, X-Access-Token",
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
-      },
-      body: JSON.stringify({
-        error: `Internal Server Error: ${error.message}`,
-      }),
-    };
+
+    try {
+      // Parse request body
+      const body = JSON.parse(event.body || "{}");
+      const { prompt } = body;
+
+      if (!prompt?.trim()) {
+        metadata.statusCode = 400;
+        metadata.headers["Content-Type"] = "application/json";
+        responseStream = awslambda.HttpResponseStream.from(
+          responseStream,
+          metadata
+        );
+        responseStream.write(
+          JSON.stringify({ error: "Bad Request: Empty prompt" })
+        );
+        responseStream.end();
+        return;
+      }
+
+      // Get the access token from the custom header (for AgentCore)
+      const accessToken =
+        event.headers?.["x-access-token"] || event.headers?.["X-Access-Token"];
+
+      if (!accessToken) {
+        console.error("Missing X-Access-Token header");
+        metadata.statusCode = 401;
+        metadata.headers["Content-Type"] = "application/json";
+        responseStream = awslambda.HttpResponseStream.from(
+          responseStream,
+          metadata
+        );
+        responseStream.write(
+          JSON.stringify({ error: "Unauthorized: Missing X-Access-Token header" })
+        );
+        responseStream.end();
+        return;
+      }
+
+      console.log("Access token received, length:", accessToken.length);
+
+      // Start streaming response
+      responseStream = awslambda.HttpResponseStream.from(
+        responseStream,
+        metadata
+      );
+
+      // Stream from AgentCore
+      await streamFromAgentCore(accessToken, prompt.trim(), responseStream);
+
+      responseStream.end();
+    } catch (error) {
+      console.error("Lambda error:", error);
+
+      // Try to send error if stream hasn't started
+      try {
+        metadata.statusCode = 500;
+        metadata.headers["Content-Type"] = "text/event-stream";
+        responseStream = awslambda.HttpResponseStream.from(
+          responseStream,
+          metadata
+        );
+        responseStream.write(
+          `data: ${JSON.stringify({ error: error.message })}\n\n`
+        );
+        responseStream.end();
+      } catch (streamError) {
+        console.error("Error writing to stream:", streamError);
+      }
+    }
   }
-};
+);
 
 /**
- * Call AWS Bedrock AgentCore and collect the complete response
+ * Stream responses from AgentCore to the client in real-time
  * @param {string} accessToken - Cognito access token
  * @param {string} prompt - User prompt
- * @returns {Promise<Object>} - Complete response from AgentCore
+ * @param {WritableStream} responseStream - Lambda response stream
  */
-async function callAgentCore(accessToken, prompt) {
+async function streamFromAgentCore(accessToken, prompt, responseStream) {
   const BEDROCK_AGENT_CORE_ENDPOINT_URL =
     "https://bedrock-agentcore.ap-northeast-1.amazonaws.com";
   const agentArn = process.env.AGENT_CORE_ARN || "";
@@ -120,11 +138,10 @@ async function callAgentCore(accessToken, prompt) {
     throw new Error("No response body from AgentCore");
   }
 
-  // Collect all chunks from the streaming response
+  // Stream chunks from AgentCore to client in real-time
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
-  let fullText = "";
 
   try {
     while (true) {
@@ -141,93 +158,52 @@ async function callAgentCore(accessToken, prompt) {
 
         if (!line) continue;
 
-        console.log("Received line:", line);
+        console.log("Streaming line:", line);
 
-        // Process SSE data
+        // Forward SSE data directly to client
         if (line.startsWith("data: ")) {
           const data = line.slice(6).trim();
+
           if (data === "[DONE]") {
             console.log("Stream completed");
+            responseStream.write(`data: [DONE]\n\n`);
             break;
           }
 
           try {
             const parsed = JSON.parse(data);
-            console.log("Parsed data:", parsed);
 
+            // Extract text content if available
             let textContent = "";
             if (parsed.event?.contentBlockDelta?.delta?.text) {
               textContent = parsed.event.contentBlockDelta.delta.text;
             } else if (parsed.text) {
               textContent = parsed.text;
-            } else if (typeof parsed === "string") {
-              textContent = parsed;
             }
 
+            // Stream text content to client
             if (textContent) {
-              fullText += textContent;
+              responseStream.write(
+                `data: ${JSON.stringify({ text: textContent })}\n\n`
+              );
+            }
+
+            // Also stream errors if any
+            if (parsed.error) {
+              responseStream.write(`data: ${JSON.stringify(parsed)}\n\n`);
             }
           } catch (parseError) {
             console.error("JSON parse error:", parseError, "for data:", data);
-          }
-        } else {
-          // Try parsing as direct JSON
-          try {
-            const parsed = JSON.parse(line);
-            console.log("Parsed direct JSON:", parsed);
-
-            let textContent = "";
-            if (parsed.event?.contentBlockDelta?.delta?.text) {
-              textContent = parsed.event.contentBlockDelta.delta.text;
-            } else if (parsed.text) {
-              textContent = parsed.text;
-            } else if (typeof parsed === "string") {
-              textContent = parsed;
-            }
-
-            if (textContent) {
-              fullText += textContent;
-            }
-          } catch (parseError) {
-            console.error(
-              "Direct JSON parse error:",
-              parseError,
-              "for line:",
-              line
-            );
+            // Forward unparseable data as-is
+            responseStream.write(`data: ${data}\n\n`);
           }
         }
       }
     }
 
-    // Process any remaining buffer
-    if (buffer.trim()) {
-      try {
-        const parsed = JSON.parse(buffer);
-        console.log("Parsed remaining buffer:", parsed);
-
-        let textContent = "";
-        if (parsed.event?.contentBlockDelta?.delta?.text) {
-          textContent = parsed.event.contentBlockDelta.delta.text;
-        } else if (parsed.text) {
-          textContent = parsed.text;
-        } else if (typeof parsed === "string") {
-          textContent = parsed;
-        }
-
-        if (textContent) {
-          fullText += textContent;
-        }
-      } catch (parseError) {
-        console.error("Buffer parse error:", parseError, "for buffer:", buffer);
-      }
-    }
+    // Send completion marker
+    responseStream.write(`data: [DONE]\n\n`);
   } finally {
     reader.releaseLock();
   }
-
-  return {
-    text: fullText,
-    completed: true,
-  };
 }
