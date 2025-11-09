@@ -1,6 +1,6 @@
 {
-  "name": "knowledge-share-app-gen1",
-  "version": "0.1.0",
+  "name": "nextjs-amplify-gen1-bedrock-agentcore-app",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",

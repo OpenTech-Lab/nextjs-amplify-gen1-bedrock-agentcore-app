@@ -1,36 +1,172 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Next.js Amplify Gen 1 Bedrock Agentcore App
 
-## Getting Started
+This is a full-stack web application built with Next.js, Tailwind CSS, shadcn/ui components, and AWS Amplify Gen 1. It integrates Amazon Bedrock Agentcore for AI-powered chat functionality, enabling a knowledge sharing platform with intelligent conversational agents.
 
-First, run the development server:
+## Tech Stack
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Frontend**: Next.js 14, React, TypeScript
+- **Styling**: Tailwind CSS, shadcn/ui component library
+- **Backend**: AWS Amplify Gen 1 (API Gateway, Lambda Functions, Cognito Authentication)
+- **AI/ML**: Amazon Bedrock Agentcore (Python-based agent)
+- **Hosting**: AWS S3 and CloudFront via Amplify
+- **Database**: AWS services through Amplify (DynamoDB, etc.)
+
+## Features
+
+- 🔐 User authentication and authorization with AWS Cognito
+- 💬 AI-powered chat interface using Bedrock Agentcore
+- 📚 Knowledge sharing platform
+- 🎨 Modern, responsive UI with shadcn/ui components
+- ☁️ Serverless backend with AWS Lambda
+- 🚀 Static site hosting on S3/CloudFront
+- 🔄 Real-time updates with Server-Sent Events (SSE)
+
+## Project Structure
+
+```
+├── app/                    # Next.js app directory
+│   ├── globals.css        # Global styles
+│   ├── layout.tsx         # Root layout
+│   └── page.tsx           # Home page
+├── components/            # React components
+│   ├── ui/               # shadcn/ui components
+│   ├── AuthProvider.tsx  # Authentication provider
+│   ├── ChatComponent.tsx # Chat interface
+│   ├── Header.tsx        # App header
+│   └── Sidebar.tsx       # Navigation sidebar
+├── hooks/                # Custom React hooks
+├── lib/                  # Utility libraries
+├── amplify/              # AWS Amplify configuration
+│   ├── backend/          # Backend resources
+│   ├── #current-cloud-backend/  # Current deployment state
+│   └── team-provider-info.json
+├── agentcore/            # Amazon Bedrock Agentcore
+│   ├── my_agent.py       # Python agent implementation
+│   └── requirements.txt  # Python dependencies
+├── public/               # Static assets
+└── src/                  # Additional source files
+    └── amplifyconfiguration.json
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Prerequisites
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Node.js (v18 or later)
+- npm or yarn
+- AWS CLI configured with appropriate permissions
+- Python 3.8+ (for Agentcore)
+- Amplify CLI installed globally
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Installation
 
-## Learn More
+1. **Clone the repository**
 
-To learn more about Next.js, take a look at the following resources:
+   ```bash
+   git clone <repository-url>
+   cd nextjs-amplify-gen1-bedrock-agentcore-app
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+2. **Install frontend dependencies**
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+   ```bash
+   npm install
+   ```
 
-## Deploy on Vercel
+3. **Set up AWS Amplify**
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+   ```bash
+   amplify init
+   amplify pull
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+4. **Configure Agentcore**
+
+   ```bash
+   cd agentcore
+   pip install -r requirements.txt
+   ```
+
+5. **Environment Configuration**
+   - Copy `.env.example` to `.env.local` and fill in required values
+   - Ensure AWS credentials are configured
+
+## Usage
+
+### Development
+
+1. **Start the development server**
+
+   ```bash
+   npm run dev
+   ```
+
+   Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+2. **Run the Agentcore locally** (if needed)
+   ```bash
+   cd agentcore
+   python my_agent.py
+   ```
+
+### Building
+
+```bash
+npm run build
+```
+
+### Testing
+
+```bash
+npm test
+```
+
+## Deployment
+
+1. **Deploy to AWS Amplify**
+
+   ```bash
+   amplify push
+   amplify publish
+   ```
+
+2. **Monitor and manage**
+   - Use AWS Console to monitor Lambda functions, API Gateway, etc.
+   - Check Amplify Console for hosting status
+
+## API Endpoints
+
+- `/api/chat` - Chat API endpoint (handled by Lambda function)
+- Authentication endpoints via AWS Cognito
+
+## Configuration
+
+### Amplify Configuration
+
+- API: REST API via API Gateway
+- Auth: Amazon Cognito User Pool
+- Hosting: S3 and CloudFront
+- Functions: Node.js Lambda functions
+
+### Bedrock Agentcore
+
+- Python-based agent for AI interactions
+- Configured in `agentcore/my_agent.py`
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- [Next.js](https://nextjs.org/) - The React framework
+- [AWS Amplify](https://aws.amazon.com/amplify/) - Backend and hosting
+- [Amazon Bedrock](https://aws.amazon.com/bedrock/) - AI/ML services
+- [shadcn/ui](https://ui.shadcn.com/) - UI component library
+- [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS framework
