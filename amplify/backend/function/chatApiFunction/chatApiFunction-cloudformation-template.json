@@ -81,7 +81,7 @@
         },
         "Runtime": "nodejs22.x",
         "Layers": [],
-        "Timeout": 25
+        "Timeout": 600
       }
     },
     "LambdaExecutionRole": {
@@ -165,6 +165,45 @@
           ]
         }
       }
+    },
+    "LambdaFunctionUrl": {
+      "Type": "AWS::Lambda::Url",
+      "Properties": {
+        "AuthType": "NONE",
+        "TargetFunctionArn": {
+          "Fn::GetAtt": [
+            "LambdaFunction",
+            "Arn"
+          ]
+        },
+        "Cors": {
+          "AllowHeaders": [
+            "content-type",
+            "accept",
+            "authorization",
+            "x-access-token"
+          ],
+          "AllowMethods": [
+            "POST"
+          ],
+          "AllowOrigins": [
+            "*"
+          ],
+          "MaxAge": 86400
+        },
+        "InvokeMode": "RESPONSE_STREAM"
+      }
+    },
+    "LambdaFunctionUrlPermission": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "LambdaFunction"
+        },
+        "Action": "lambda:InvokeFunctionUrl",
+        "Principal": "*",
+        "FunctionUrlAuthType": "NONE"
+      }
     }
   },
   "Outputs": {
@@ -196,6 +235,14 @@
         "Fn::GetAtt": [
           "LambdaExecutionRole",
           "Arn"
+        ]
+      }
+    },
+    "FunctionUrl": {
+      "Value": {
+        "Fn::GetAtt": [
+          "LambdaFunctionUrl",
+          "FunctionUrl"
         ]
       }
     }

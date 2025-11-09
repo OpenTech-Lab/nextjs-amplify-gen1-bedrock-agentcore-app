@@ -20,6 +20,7 @@ export type AmplifyDependentResourcesAttributes = {
   "function": {
     "chatApiFunction": {
       "Arn": "string",
+      "FunctionUrl": "string",
       "LambdaExecutionRole": "string",
       "LambdaExecutionRoleArn": "string",
       "Name": "string",

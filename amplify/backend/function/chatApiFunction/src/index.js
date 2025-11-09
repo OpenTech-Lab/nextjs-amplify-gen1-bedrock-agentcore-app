@@ -1,98 +1,92 @@
-const { Readable } = require("stream");
-
 /**
  * Lambda streaming handler for AgentCore chat
  * Streams responses in real-time using Lambda Function URL response streaming
  */
-exports.handler = awslambda.streamifyResponse(
-  async (event, responseStream, context) => {
-    console.log(`EVENT: ${JSON.stringify(event)}`);
+exports.handler = awslambda.streamifyResponse(async (event, responseStream) => {
+  console.log(`EVENT: ${JSON.stringify(event)}`);
 
-    // Set CORS headers for streaming response
-    const metadata = {
-      statusCode: 200,
-      headers: {
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        "Connection": "keep-alive",
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers":
-          "Content-Type, Authorization, X-Access-Token",
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
-      },
-    };
+  // Set headers for streaming response (CORS handled by Function URL)
+  const metadata = {
+    statusCode: 200,
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+    },
+  };
 
-    try {
-      // Parse request body
-      const body = JSON.parse(event.body || "{}");
-      const { prompt } = body;
+  try {
+    // Parse request body
+    const body = JSON.parse(event.body || "{}");
+    const { prompt } = body;
 
-      if (!prompt?.trim()) {
-        metadata.statusCode = 400;
-        metadata.headers["Content-Type"] = "application/json";
-        responseStream = awslambda.HttpResponseStream.from(
-          responseStream,
-          metadata
-        );
-        responseStream.write(
-          JSON.stringify({ error: "Bad Request: Empty prompt" })
-        );
-        responseStream.end();
-        return;
-      }
-
-      // Get the access token from the custom header (for AgentCore)
-      const accessToken =
-        event.headers?.["x-access-token"] || event.headers?.["X-Access-Token"];
-
-      if (!accessToken) {
-        console.error("Missing X-Access-Token header");
-        metadata.statusCode = 401;
-        metadata.headers["Content-Type"] = "application/json";
-        responseStream = awslambda.HttpResponseStream.from(
-          responseStream,
-          metadata
-        );
-        responseStream.write(
-          JSON.stringify({ error: "Unauthorized: Missing X-Access-Token header" })
-        );
-        responseStream.end();
-        return;
-      }
-
-      console.log("Access token received, length:", accessToken.length);
-
-      // Start streaming response
+    if (!prompt?.trim()) {
+      metadata.statusCode = 400;
+      metadata.headers["Content-Type"] = "application/json";
       responseStream = awslambda.HttpResponseStream.from(
         responseStream,
         metadata
       );
-
-      // Stream from AgentCore
-      await streamFromAgentCore(accessToken, prompt.trim(), responseStream);
-
+      responseStream.write(
+        JSON.stringify({ error: "Bad Request: Empty prompt" })
+      );
       responseStream.end();
-    } catch (error) {
-      console.error("Lambda error:", error);
+      return;
+    }
 
-      // Try to send error if stream hasn't started
-      try {
-        metadata.statusCode = 500;
-        metadata.headers["Content-Type"] = "text/event-stream";
-        responseStream = awslambda.HttpResponseStream.from(
-          responseStream,
-          metadata
-        );
-        responseStream.write(
-          `data: ${JSON.stringify({ error: error.message })}\n\n`
-        );
-        responseStream.end();
-      } catch (streamError) {
-        console.error("Error writing to stream:", streamError);
-      }
+    // Get the access token from the custom header (for AgentCore)
+    const accessToken =
+      event.headers?.["x-access-token"] || event.headers?.["X-Access-Token"];
+
+    if (!accessToken) {
+      console.error("Missing X-Access-Token header");
+      metadata.statusCode = 401;
+      metadata.headers["Content-Type"] = "application/json";
+      responseStream = awslambda.HttpResponseStream.from(
+        responseStream,
+        metadata
+      );
+      responseStream.write(
+        JSON.stringify({
+          error: "Unauthorized: Missing X-Access-Token header",
+        })
+      );
+      responseStream.end();
+      return;
+    }
+
+    console.log("Access token received, length:", accessToken.length);
+
+    // Start streaming response
+    responseStream = awslambda.HttpResponseStream.from(
+      responseStream,
+      metadata
+    );
+
+    // Stream from AgentCore
+    await streamFromAgentCore(accessToken, prompt.trim(), responseStream);
+
+    responseStream.end();
+  } catch (error) {
+    console.error("Lambda error:", error);
+
+    // Try to send error if stream hasn't started
+    try {
+      metadata.statusCode = 500;
+      metadata.headers["Content-Type"] = "text/event-stream";
+      responseStream = awslambda.HttpResponseStream.from(
+        responseStream,
+        metadata
+      );
+      responseStream.write(
+        `data: ${JSON.stringify({ error: error.message })}\n\n`
+      );
+      responseStream.end();
+    } catch (streamError) {
+      console.error("Error writing to stream:", streamError);
     }
   }
-);
+});
 
 /**
  * Stream responses from AgentCore to the client in real-time

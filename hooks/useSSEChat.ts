@@ -78,19 +78,25 @@ export function useSSEChat(options: SSEChatOptions = {}) {
         return;
       }
 
+      console.log("Sending request to Lambda Function URL...");
+
       try {
         // Lambda Function URL with SSE streaming (no API Gateway timeout)
-        const response = await fetch(
-          "https://nufrr3f65q2ygigtxizwwotug40edhkn.lambda-url.ap-northeast-1.on.aws/",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-Access-Token": accessToken, // Access token for AgentCore (has client_id claim)
-            },
-            body: JSON.stringify({ prompt }),
-          }
-        );
+        const functionUrl =
+          process.env.NEXT_PUBLIC_LAMBDA_FUNCTION_URL ||
+          "https://gngqjao6o3le3rlwel3mcedyou0dptfy.lambda-url.ap-northeast-1.on.aws/";
+
+        const response = await fetch(functionUrl, {
+          method: "POST",
+          // 'cors' is default in browser for cross-origin; set explicitly for clarity
+          mode: "cors",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "text/event-stream",
+            "X-Access-Token": accessToken, // Access token for AgentCore (has client_id claim)
+          },
+          body: JSON.stringify({ prompt }),
+        });
 
         console.log("Response status:", response.status);
 
@@ -105,8 +111,17 @@ export function useSSEChat(options: SSEChatOptions = {}) {
             errorData = { error: errorText || "Unknown error" };
           }
 
+          // If CORS blocked upstream (e.g., Function URL not configured), the browser
+          // reports 403 with missing CORS headers. Surface a clearer hint.
+          const msg =
+            errorData.error ||
+            errorData.message ||
+            `HTTP ${response.status}: ${response.statusText || errorText}`;
           throw new Error(
-            errorData.error || errorData.message || `HTTP ${response.status}: ${response.statusText || errorText}`
+            response.status === 403 &&
+            !response.headers.get("access-control-allow-origin")
+              ? `${msg} (CORS: Function URL must allow your origin and headers)`
+              : msg
           );
         }
 
@@ -162,10 +177,18 @@ export function useSSEChat(options: SSEChatOptions = {}) {
                   });
                 }
               } catch (parseError) {
-                if (parseError instanceof Error && parseError.message.startsWith("An error occurred")) {
+                if (
+                  parseError instanceof Error &&
+                  parseError.message.startsWith("An error occurred")
+                ) {
                   throw parseError;
                 }
-                console.error("JSON parse error:", parseError, "for data:", data);
+                console.error(
+                  "JSON parse error:",
+                  parseError,
+                  "for data:",
+                  data
+                );
               }
             }
           }

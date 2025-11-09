@@ -25,6 +25,8 @@ mcp_context_manager = None
 NAMING_SYSTEM_PROMPT = """
 あなたは知識を提供するためにユーザーを支援するアシスタントです。
 主な役割は、ユーザーが提供する情報に基づいて適切な情報を収集し回答することです。
+
+回答は簡潔に、関連する情報のみを提供してください。
 """
 
 def initialize_agent():
@@ -32,11 +34,13 @@ def initialize_agent():
     global agent, mcp_context_manager
 
     if agent is None:
+        print("Initializing agent with MCP tools...")
         # Enter MCP context and keep it open
         mcp_context_manager = stdio_mcp_client.__enter__()
 
         # Get tools from MCP server
         tools = stdio_mcp_client.list_tools_sync()
+        print(f"Loaded {len(tools)} MCP tools")
 
         # Create agent with tools
         agent = Agent(
@@ -45,6 +49,7 @@ def initialize_agent():
             system_prompt=NAMING_SYSTEM_PROMPT,
             
         )
+        print("Agent initialized successfully")
 
     return agent
 
