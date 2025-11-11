@@ -4,7 +4,7 @@ This is a full-stack web application built with Next.js, Tailwind CSS, shadcn/ui
 
 ## Tech Stack
 
-- **Frontend**: Next.js 14, React, TypeScript
+- **Frontend**: Next.js 15, React, TypeScript
 - **Styling**: Tailwind CSS, shadcn/ui component library
 - **Backend**: AWS Amplify Gen 1 (API Gateway, Lambda Functions, Cognito Authentication)
 - **AI/ML**: Amazon Bedrock Agentcore (Python-based agent)
