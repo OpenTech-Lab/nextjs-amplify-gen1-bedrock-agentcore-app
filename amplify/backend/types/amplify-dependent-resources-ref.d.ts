@@ -1,13 +1,6 @@
 export type AmplifyDependentResourcesAttributes = {
-  "api": {
-    "chatApi": {
-      "ApiId": "string",
-      "ApiName": "string",
-      "RootUrl": "string"
-    }
-  },
   "auth": {
-    "knowledgeshareappgen77014aff": {
+    "nextjsagentcoreappcd10e5a9": {
       "AppClientID": "string",
       "AppClientIDWeb": "string",
       "IdentityPoolId": "string",
@@ -18,7 +11,7 @@ export type AmplifyDependentResourcesAttributes = {
     }
   },
   "function": {
-    "chatApiFunction": {
+    "nextjsagentcoreappe560571a": {
       "Arn": "string",
       "FunctionUrl": "string",
       "LambdaExecutionRole": "string",

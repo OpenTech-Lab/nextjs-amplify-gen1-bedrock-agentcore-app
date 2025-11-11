@@ -82,9 +82,7 @@ export function useSSEChat(options: SSEChatOptions = {}) {
 
       try {
         // Lambda Function URL with SSE streaming (no API Gateway timeout)
-        const functionUrl =
-          process.env.NEXT_PUBLIC_LAMBDA_FUNCTION_URL ||
-          "https://gngqjao6o3le3rlwel3mcedyou0dptfy.lambda-url.ap-northeast-1.on.aws/";
+        const functionUrl = process.env.NEXT_PUBLIC_LAMBDA_FUNCTION_URL || "";
 
         const response = await fetch(functionUrl, {
           method: "POST",

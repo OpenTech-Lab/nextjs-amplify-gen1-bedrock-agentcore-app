@@ -1,32 +1,29 @@
 {
   "dev": {
     "awscloudformation": {
-      "AuthRoleName": "amplify-knowledgeshareappgen-dev-63c06-authRole",
-      "UnauthRoleArn": "arn:aws:iam::832780067678:role/amplify-knowledgeshareappgen-dev-63c06-unauthRole",
-      "AuthRoleArn": "arn:aws:iam::832780067678:role/amplify-knowledgeshareappgen-dev-63c06-authRole",
+      "AuthRoleName": "amplify-nextjsagentcoreapp-dev-c5c58-authRole",
+      "UnauthRoleArn": "arn:aws:iam::832780067678:role/amplify-nextjsagentcoreapp-dev-c5c58-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::832780067678:role/amplify-nextjsagentcoreapp-dev-c5c58-authRole",
       "Region": "ap-northeast-1",
-      "DeploymentBucketName": "amplify-knowledgeshareappgen-dev-63c06-deployment",
-      "UnauthRoleName": "amplify-knowledgeshareappgen-dev-63c06-unauthRole",
-      "StackName": "amplify-knowledgeshareappgen-dev-63c06",
-      "StackId": "arn:aws:cloudformation:ap-northeast-1:832780067678:stack/amplify-knowledgeshareappgen-dev-63c06/a212a6f0-b647-11f0-8ad3-0a3566467381",
-      "AmplifyAppId": "d3t1rkzeqa6si8",
-      "APIGatewayAuthURL": "https://s3.amazonaws.com/amplify-knowledgeshareappgen-dev-63c06-deployment/amplify-cfn-templates/api/APIGatewayAuthStack.json"
+      "DeploymentBucketName": "amplify-nextjsagentcoreapp-dev-c5c58-deployment",
+      "UnauthRoleName": "amplify-nextjsagentcoreapp-dev-c5c58-unauthRole",
+      "StackName": "amplify-nextjsagentcoreapp-dev-c5c58",
+      "StackId": "arn:aws:cloudformation:ap-northeast-1:832780067678:stack/amplify-nextjsagentcoreapp-dev-c5c58/7b28ecf0-bef5-11f0-9a1c-0af8bec4ca07",
+      "AmplifyAppId": "d191910utdab2j",
+      "APIGatewayAuthURL": "https://s3.amazonaws.com/amplify-nextjsagentcoreapp-dev-c5c58-deployment/amplify-cfn-templates/api/APIGatewayAuthStack.json"
     },
     "categories": {
       "auth": {
-        "knowledgeshareappgen77014aff": {}
+        "nextjsagentcoreappcd10e5a9": {}
+      },
+      "function": {
+        "nextjsagentcoreappe560571a": {
+          "deploymentBucketName": "amplify-nextjsagentcoreapp-dev-c5c58-deployment",
+          "s3Key": "amplify-builds/nextjsagentcoreappe560571a-645a464a596b324e4d58-build.zip"
+        }
       },
       "hosting": {
         "S3AndCloudFront": {}
-      },
-      "function": {
-        "chatApiFunction": {
-          "deploymentBucketName": "amplify-knowledgeshareappgen-dev-63c06-deployment",
-          "s3Key": "amplify-builds/chatApiFunction-62364b51456e35575642-build.zip"
-        }
-      },
-      "api": {
-        "chatApi": {}
       }
     }
   }

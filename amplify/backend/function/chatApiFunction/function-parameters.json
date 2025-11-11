@@ -1,4 +1,0 @@
-{
-  "lambdaLayers": [],
-  "AgentCoreArn": "arn:aws:bedrock-agentcore:ap-northeast-1:832780067678:runtime/my_agent-8ihNxq5pN4"
-}

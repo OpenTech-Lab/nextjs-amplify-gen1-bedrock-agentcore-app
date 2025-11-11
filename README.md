@@ -124,11 +124,25 @@ npm test
 1. **Deploy to AWS Amplify**
 
    ```bash
+   rm amplify-old
+   mv amplify amplify-old
+   amplify init
+   amplify add auth
+   amplify add hosting
+   amplify add api
+
    amplify push
    amplify publish
    ```
 
-2. **Monitor and manage**
+2. **Deploy Bedrock Agentcore**
+
+   ```
+   agentcore configure --entrypoint my_agent.py
+   agentcore launch
+   ```
+
+3. **Monitor and manage**
    - Use AWS Console to monitor Lambda functions, API Gateway, etc.
    - Check Amplify Console for hosting status
 

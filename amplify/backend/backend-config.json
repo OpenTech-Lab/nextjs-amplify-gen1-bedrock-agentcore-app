@@ -1,7 +1,7 @@
 {
   "api": {},
   "auth": {
-    "knowledgeshareappgen77014aff": {
+    "nextjsagentcoreappcd10e5a9": {
       "customAuth": false,
       "dependsOn": [],
       "frontendAuthConfig": {
@@ -29,7 +29,7 @@
     }
   },
   "function": {
-    "chatApiFunction": {
+    "nextjsagentcoreappe560571a": {
       "build": true,
       "providerPlugin": "awscloudformation",
       "service": "Lambda"
@@ -42,19 +42,19 @@
     }
   },
   "parameters": {
-    "AMPLIFY_function_chatApiFunction_deploymentBucketName": {
+    "AMPLIFY_function_nextjsagentcoreappe560571a_deploymentBucketName": {
       "usedBy": [
         {
           "category": "function",
-          "resourceName": "chatApiFunction"
+          "resourceName": "nextjsagentcoreappe560571a"
         }
       ]
     },
-    "AMPLIFY_function_chatApiFunction_s3Key": {
+    "AMPLIFY_function_nextjsagentcoreappe560571a_s3Key": {
       "usedBy": [
         {
           "category": "function",
-          "resourceName": "chatApiFunction"
+          "resourceName": "nextjsagentcoreappe560571a"
         }
       ]
     }
